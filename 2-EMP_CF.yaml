@@ -1167,15 +1167,27 @@ Resources:
           CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
           ViewerProtocolPolicy: redirect-to-https
         CacheBehaviors:
-          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName1}/${EndpointName1}/*'
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName1}/${EndpointName1}/*.m3u8'
             TargetOriginId: 'Origin-gp'
             CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
             ViewerProtocolPolicy: redirect-to-https
-          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName2}/${EndpointName2}/*'
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName1}/${EndpointName1}/*.mp4'
             TargetOriginId: 'Origin-gp'
             CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
             ViewerProtocolPolicy: redirect-to-https
-          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName3}/${EndpointName3}/*'
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName2}/${EndpointName2}/*.m3u8'
+            TargetOriginId: 'Origin-gp'
+            CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName2}/${EndpointName2}/*.mp4'
+            TargetOriginId: 'Origin-gp'
+            CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName3}/${EndpointName3}/*.m3u8'
+            TargetOriginId: 'Origin-gp'
+            CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName3}/${EndpointName3}/*.mp4'
             TargetOriginId: 'Origin-gp'
             CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
             ViewerProtocolPolicy: redirect-to-https
