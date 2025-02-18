@@ -34,9 +34,9 @@ Channel B: `2-EMP_CF.yaml`
    Method 1: via script
    1. Modify the emp_mqcs.py script
    ```python
-   regions = ['ap-northeast-1', 'ap-northeast-3']
-   channel_group_id = 'gp1'
-   channel_id = 'ch1'
+   regions = ['us-west-2', 'us-east-1']  # Add your regions
+   channel_group_id = 'gp1'  # Your channel group ID
+   channels = ['ch1','ch2','ch3']  # Your channel ID
    ```
    1. Enable MQCS in MediaPackage channel
    ```
@@ -72,15 +72,15 @@ python script.py {start|stop|input_s3|input_live|ch1_pause|ch2_pasue|ch1_unpause
 ### Configuration
 Before using the script, modify the channel ids and regions:
 ```python
-CHANNEL_1_ID = '7528721'
-CHANNEL_1_REGION = 'ap-northeast-1'
-CHANNEL_2_ID = '3320982'
-CHANNEL_2_REGION = 'ap-northeast-3'
+CHANNEL_1_ID = ['5833484','1963187', '283907']
+CHANNEL_1_REGION = 'us-west-2'
+CHANNEL_2_ID = ['2346332','1905370', '7714']
+CHANNEL_2_REGION = 'us-east-1'
 ```
 
 ## Test Cases
 
-1. Start channels:
+1. Start all channels:
 ```bash
 python3 script.py start
 ```
@@ -95,21 +95,21 @@ python3 script.py start
    - Now you can monitor when failover occurs
 
 3. Switch to prod file input:
-   ```bash
-   python3 script.py input_live
-   ```
+```bash
+python3 script.py input_live
+```
    - After 30s, both channels switch to the prod file input
 
 4. Test Channel 1 Failover
-   ```bash
-   python3 script.py ch1_pause
-   ```
-   Expected behavior:
-   - Video stream should switch from Channel 1 to Channel 2
+```bash
+python3 script.py ch1_pause
+```
+Expected behavior:
+- Video stream should switch from Channel 1 to Channel 2
 
 5. Restore Channel 1
-   ```bash
-   python3 script.py ch1_unpause
-   ```
-   Expected behavior:
-   - Video stream should switch back from Channel 2 to Channel 1
+```bash
+python3 script.py ch1_unpause
+```
+Expected behavior:
+- Video stream should switch back from Channel 2 to Channel 1
