@@ -2,14 +2,30 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'MQAR Test Environment'
 
 Parameters:
-  EndpointName:
-    Type: String
-    Default: 'cmaf'
-    Description: 'Endpoint Name for MediaPackage endpoint'
-  ChannelName:
+  ChannelName1:
     Type: String
     Default: 'ch1'
-    Description: 'Channel Name for MediaLive, MediaPackage and MediaConnect'
+    Description: 'Channel Name 1'
+  ChannelName2:
+    Type: String
+    Default: 'ch2'
+    Description: 'Channel Name 2'
+  ChannelName3:
+    Type: String
+    Default: 'ch3'
+    Description: 'Channel Name 3'
+  EndpointName1:
+    Type: String
+    Default: 'cmaf'
+    Description: 'Endpoint Name 1'
+  EndpointName2:
+    Type: String
+    Default: 'cmaf'
+    Description: 'Endpoint Name 2'
+  EndpointName3:
+    Type: String
+    Default: 'cmaf'
+    Description: 'Endpoint Name 3'
   ChannelGroupName:
     Type: String
     Default: 'gp1'
@@ -20,58 +36,117 @@ Parameters:
     Type: String
     Default: 'Channel_2_'
     Description: 'Prefix for the TimecodeBurninSettings'
+  S3FilePathA:
+    Type: String
+    Default: 's3://bucket/slate_1080_5994p.mp4'
+    Description: 'S3 file path for slate'
+  S3FilePathB:
+    Type: String
+    Default: 's3://bucket/bbb_1080_5994p.mp4'
+    Description: 'S3 file path for prod input'
   EgressDomainChannel1:
     Type: String
     Default: 'XXXXX.mediapackagev2.ap-southeast-4.amazonaws.com'
     Description: 'Enter Channel 1 Egress Domain'
-  S3FilePathA:
-    Type: String
-    Default: 's3://sam-s3-syd-source/slate.mp4'
-    Description: 'S3 file path for slate'
-  S3FilePathB:
-    Type: String
-    Default: 's3://sam-s3-syd-source/prod.mp4'
-    Description: 'S3 file path for prod input'
     
 Resources:
-  MediaLiveInputA:
+  MediaLiveInputA1:
     Type: AWS::MediaLive::Input
     Properties:
-      Name: !Sub '${ChannelName}-slate'
+      Name: !Sub '${ChannelName1}-slate'
       Type: MP4_FILE
       Sources:
         - Url: !Sub '${S3FilePathA}'
       RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
 
-  MediaLiveInputB:
+  MediaLiveInputB1:
     Type: AWS::MediaLive::Input
     Properties:
-      Name: !Sub '${ChannelName}-prod'
+      Name: !Sub '${ChannelName1}-prod'
       Type: MP4_FILE
       Sources:
         - Url: !Sub '${S3FilePathB}'
       RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+
+  # Add inputs for channel 2
+  MediaLiveInputA2:
+    Type: AWS::MediaLive::Input
+    Properties:
+      Name: !Sub '${ChannelName2}-slate'
+      Type: MP4_FILE
+      Sources:
+        - Url: !Sub '${S3FilePathA}'
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+
+  MediaLiveInputB2:
+    Type: AWS::MediaLive::Input
+    Properties:
+      Name: !Sub '${ChannelName2}-prod'
+      Type: MP4_FILE
+      Sources:
+        - Url: !Sub '${S3FilePathB}'
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+
+  # Add inputs for channel 3
+  MediaLiveInputA3:
+    Type: AWS::MediaLive::Input
+    Properties:
+      Name: !Sub '${ChannelName3}-slate'
+      Type: MP4_FILE
+      Sources:
+        - Url: !Sub '${S3FilePathA}'
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+
+  MediaLiveInputB3:
+    Type: AWS::MediaLive::Input
+    Properties:
+      Name: !Sub '${ChannelName3}-prod'
+      Type: MP4_FILE
+      Sources:
+        - Url: !Sub '${S3FilePathB}'
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+
       
   MediaPackageV2ChannelGroup:
-    Type: 'AWS::MediaPackageV2::ChannelGroup'
+    Type: AWS::MediaPackageV2::ChannelGroup
     Properties:
       ChannelGroupName: !Ref ChannelGroupName
 
-  MediaPackageV2Channel:
-    Type: 'AWS::MediaPackageV2::Channel'
+  # Create 3 MediaPackage Channels
+  MediaPackageV2Channel1:
+    Type: AWS::MediaPackageV2::Channel
     Properties:
       ChannelGroupName: !Ref ChannelGroupName
-      ChannelName: !Sub '${ChannelName}'
+      ChannelName: !Ref ChannelName1
+      InputType: 'CMAF'
+    DependsOn:
+      - MediaPackageV2ChannelGroup
+
+  MediaPackageV2Channel2:
+    Type: AWS::MediaPackageV2::Channel
+    Properties:
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName2
+      InputType: 'CMAF'
+    DependsOn:
+      - MediaPackageV2ChannelGroup
+
+  MediaPackageV2Channel3:
+    Type: AWS::MediaPackageV2::Channel
+    Properties:
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName3
       InputType: 'CMAF'
     DependsOn:
       - MediaPackageV2ChannelGroup
         
-  MediaPackageV2OriginEndpoint:
-    Type: 'AWS::MediaPackageV2::OriginEndpoint'
+  # Create 3 MediaPackage Endpoints
+  MediaPackageV2OriginEndpoint1:
+    Type: AWS::MediaPackageV2::OriginEndpoint
     Properties:
-      OriginEndpointName: !Ref EndpointName
+      OriginEndpointName: !Ref EndpointName1
       ChannelGroupName: !Ref ChannelGroupName
-      ChannelName: !Ref ChannelName
+      ChannelName: !Ref ChannelName1
       ContainerType: CMAF
       StartoverWindowSeconds: 1209600
       Segment: 
@@ -83,14 +158,52 @@ Resources:
           ManifestWindowSeconds: 60
           ProgramDateTimeIntervalSeconds: 4
     DependsOn:
-      - MediaPackageV2Channel
+      - MediaPackageV2Channel1
 
-  MediaPackageV2OriginEndpointPolicy:
+  MediaPackageV2OriginEndpoint2:
+    Type: AWS::MediaPackageV2::OriginEndpoint
+    Properties:
+      OriginEndpointName: !Ref EndpointName2
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName2
+      ContainerType: CMAF
+      StartoverWindowSeconds: 1209600
+      Segment: 
+        SegmentDurationSeconds: 4
+        SegmentName: segment
+        TsUseAudioRenditionGroup: True
+      HlsManifests: 
+        - ManifestName: 'index'
+          ManifestWindowSeconds: 60
+          ProgramDateTimeIntervalSeconds: 4
+    DependsOn:
+      - MediaPackageV2Channel2
+
+  MediaPackageV2OriginEndpoint3:
+    Type: AWS::MediaPackageV2::OriginEndpoint
+    Properties:
+      OriginEndpointName: !Ref EndpointName3
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName3
+      ContainerType: CMAF
+      StartoverWindowSeconds: 1209600
+      Segment: 
+        SegmentDurationSeconds: 4
+        SegmentName: segment
+        TsUseAudioRenditionGroup: True
+      HlsManifests: 
+        - ManifestName: 'index'
+          ManifestWindowSeconds: 60
+          ProgramDateTimeIntervalSeconds: 4
+    DependsOn:
+      - MediaPackageV2Channel3
+
+  MediaPackageV2OriginEndpointPolicy1:
     Type: AWS::MediaPackageV2::OriginEndpointPolicy
     Properties:
-      OriginEndpointName: !Ref EndpointName
+      OriginEndpointName: !Ref EndpointName1
       ChannelGroupName: !Ref ChannelGroupName
-      ChannelName: !Ref ChannelName
+      ChannelName: !Ref ChannelName1
       Policy: !Sub |
         {
           "Version": "2012-10-17",
@@ -103,7 +216,7 @@ Resources:
                 "mediapackagev2:GetHeadObject",
                 "mediapackagev2:GetObject"
               ],
-              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName}/originEndpoint/${EndpointName}"
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName1}/originEndpoint/${EndpointName1}"
             },
             {
               "Sid": "AllowMediaPackageHarvestObjectAccess",
@@ -112,7 +225,7 @@ Resources:
                 "Service": "mediapackagev2.amazonaws.com"
               },
               "Action": "mediapackagev2:HarvestObject",
-              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName}/originEndpoint/${EndpointName}",
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName1}/originEndpoint/${EndpointName1}",
               "Condition": {
                 "StringEquals": {
                   "AWS:SourceAccount": "${AWS::AccountId}"
@@ -122,18 +235,96 @@ Resources:
           ]
         }
     DependsOn:
-      - MediaPackageV2OriginEndpoint
+      - MediaPackageV2OriginEndpoint1
 
-  MediaLiveChannel:
+  MediaPackageV2OriginEndpointPolicy2:
+    Type: AWS::MediaPackageV2::OriginEndpointPolicy
+    Properties:
+      OriginEndpointName: !Ref EndpointName2
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName2
+      Policy: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AllowPublicGetObjectAccess",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": [
+                "mediapackagev2:GetHeadObject",
+                "mediapackagev2:GetObject"
+              ],
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName2}/originEndpoint/${EndpointName2}"
+            },
+            {
+              "Sid": "AllowMediaPackageHarvestObjectAccess",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "mediapackagev2.amazonaws.com"
+              },
+              "Action": "mediapackagev2:HarvestObject",
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName2}/originEndpoint/${EndpointName2}",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceAccount": "${AWS::AccountId}"
+                }
+              }
+            }
+          ]
+        }
+    DependsOn:
+      - MediaPackageV2OriginEndpoint2
+
+  MediaPackageV2OriginEndpointPolicy3:
+    Type: AWS::MediaPackageV2::OriginEndpointPolicy
+    Properties:
+      OriginEndpointName: !Ref EndpointName3
+      ChannelGroupName: !Ref ChannelGroupName
+      ChannelName: !Ref ChannelName3
+      Policy: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AllowPublicGetObjectAccess",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": [
+                "mediapackagev2:GetHeadObject",
+                "mediapackagev2:GetObject"
+              ],
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName3}/originEndpoint/${EndpointName3}"
+            },
+            {
+              "Sid": "AllowMediaPackageHarvestObjectAccess",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "mediapackagev2.amazonaws.com"
+              },
+              "Action": "mediapackagev2:HarvestObject",
+              "Resource": "arn:aws:mediapackagev2:${AWS::Region}:${AWS::AccountId}:channelGroup/${ChannelGroupName}/channel/${ChannelName3}/originEndpoint/${EndpointName3}",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceAccount": "${AWS::AccountId}"
+                }
+              }
+            }
+          ]
+        }
+    DependsOn:
+      - MediaPackageV2OriginEndpoint3
+      
+  MediaLiveChannel1:
     Type: AWS::MediaLive::Channel
     Properties:
-      Name: !Sub '${ChannelName}'
+      Name: !Sub '${ChannelName1}'
       ChannelClass: SINGLE_PIPELINE
       LogLevel: DISABLED
       RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
       InputAttachments:
-        - InputAttachmentName: !Sub '${ChannelName}-slate'
-          InputId: !Ref MediaLiveInputA
+        - InputAttachmentName: 'slate'
+          InputId: !Ref MediaLiveInputA1
           InputSettings:
             AudioSelectors: []
             CaptionSelectors: []
@@ -143,8 +334,8 @@ Resources:
             InputFilter: AUTO
             Smpte2038DataPreference: IGNORE
             SourceEndBehavior: LOOP
-        - InputAttachmentName: !Sub '${ChannelName}-prod'
-          InputId: !Ref MediaLiveInputB
+        - InputAttachmentName: 'prod'
+          InputId: !Ref MediaLiveInputB1
           InputSettings:
             AudioSelectors: []
             CaptionSelectors: []
@@ -164,11 +355,11 @@ Resources:
             - Url: !Select
               - 0
               - !GetAtt
-                - MediaPackageV2Channel
+                - MediaPackageV2Channel1
                 - IngestEndpointUrls
       EncoderSettings:
         AudioDescriptions:
-          - Name: audio_mediapackage_0
+          - Name: audio
             AudioSelectorName: Default
             AudioTypeControl: FOLLOW_INPUT
             LanguageCodeControl: FOLLOW_INPUT
@@ -195,28 +386,33 @@ Resources:
                   DestinationRefId: mediapackage-destination
                 SegmentLength: 1
                 SegmentLengthUnits: SECONDS
-            Outputs: 
-              - OutputName: emp_1080p2997
-                VideoDescriptionName: emp_1080p2997
+            Outputs:
+              - OutputName: 1080p5994
                 OutputSettings:
                   CmafIngestOutputSettings:
-                    NameModifier: _1
-              - OutputName: emp_720p2997
-                VideoDescriptionName: emp_720p2997
+                    NameModifier: 1
+                VideoDescriptionName: 1080p
+              - OutputName: 720p5994
                 OutputSettings:
                   CmafIngestOutputSettings:
-                    NameModifier: _2
-              - OutputName: emp_480p2997
-                VideoDescriptionName: emp_480p2997
+                    NameModifier: 2
+                VideoDescriptionName: 720p
+              - OutputName: 480p2997
                 OutputSettings:
                   CmafIngestOutputSettings:
-                    NameModifier: _3
-              - AudioDescriptionNames: 
-                  - audio_mediapackage_0
-                OutputName: audio
+                    NameModifier: 3
+                VideoDescriptionName: 480p
+              - OutputName: 240p2997
                 OutputSettings:
                   CmafIngestOutputSettings:
-                    NameModifier: _4
+                    NameModifier: 4
+                VideoDescriptionName: 240p
+              - AudioDescriptionNames:
+                  - audio
+                OutputName: _audio
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: audio
         TimecodeConfig:
           Source: SYSTEMCLOCK
         VideoDescriptions:
@@ -229,7 +425,7 @@ Resources:
                 FlickerAq: DISABLED
                 ForceFieldPictures: DISABLED
                 FramerateControl: SPECIFIED
-                FramerateNumerator: 30000
+                FramerateNumerator: 60000
                 FramerateDenominator: 1001
                 GopBReference: DISABLED
                 GopClosedCadence: 1
@@ -246,7 +442,6 @@ Resources:
                 ParNumerator: 1
                 ParDenominator: 1
                 Profile: HIGH
-                QvbrQualityLevel: 9
                 RateControlMode: QVBR
                 Syntax: DEFAULT
                 SceneChangeDetect: ENABLED
@@ -259,7 +454,7 @@ Resources:
                   Prefix: !Ref TimecodeBurninPrefix
                 TimecodeInsertion: PIC_TIMING_SEI
             Height: 1080
-            Name: emp_1080p2997
+            Name: 1080p
             RespondToAfd: NONE
             Sharpness: 50
             ScalingBehavior: DEFAULT
@@ -273,7 +468,7 @@ Resources:
                 FlickerAq: DISABLED
                 ForceFieldPictures: DISABLED
                 FramerateControl: SPECIFIED
-                FramerateNumerator: 30000
+                FramerateNumerator: 60000
                 FramerateDenominator: 1001
                 GopBReference: DISABLED
                 GopClosedCadence: 1
@@ -290,7 +485,6 @@ Resources:
                 ParNumerator: 1
                 ParDenominator: 1
                 Profile: HIGH
-                QvbrQualityLevel: 8
                 RateControlMode: QVBR
                 Syntax: DEFAULT
                 SceneChangeDetect: ENABLED
@@ -303,7 +497,7 @@ Resources:
                   Prefix: !Ref TimecodeBurninPrefix
                 TimecodeInsertion: PIC_TIMING_SEI
             Height: 720
-            Name: emp_720p2997
+            Name: 720p
             RespondToAfd: NONE
             Sharpness: 75
             ScalingBehavior: DEFAULT
@@ -334,7 +528,6 @@ Resources:
                 ParNumerator: 1
                 ParDenominator: 1
                 Profile: MAIN
-                QvbrQualityLevel: 8
                 RateControlMode: QVBR
                 Syntax: DEFAULT
                 SceneChangeDetect: ENABLED
@@ -347,17 +540,620 @@ Resources:
                   Prefix: !Ref TimecodeBurninPrefix
                 TimecodeInsertion: PIC_TIMING_SEI
             Height: 480
-            Name: emp_480p2997
+            Name: 480p
             RespondToAfd: NONE
             Sharpness: 100
             ScalingBehavior: STRETCH_TO_OUTPUT
             Width: 854
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 30000
+                FramerateDenominator: 1001
+                GopBReference: ENABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 1500000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: MAIN
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: EXTRA_SMALL_10
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 240
+            Name: 240p
+            RespondToAfd: NONE
+            Sharpness: 100
+            ScalingBehavior: STRETCH_TO_OUTPUT
+            Width: 426
     DependsOn:
-      - MediaLiveInputA
-      - MediaLiveInputB
+      - MediaLiveInputA1
+      - MediaLiveInputB1
       - MediaPackageV2ChannelGroup
-      - MediaPackageV2Channel
-      - MediaPackageV2OriginEndpoint
+      - MediaPackageV2Channel1
+      - MediaPackageV2OriginEndpoint1
+
+  MediaLiveChannel2:
+    Type: AWS::MediaLive::Channel
+    Properties:
+      Name: !Sub '${ChannelName2}'
+      ChannelClass: SINGLE_PIPELINE
+      LogLevel: DISABLED
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+      InputAttachments:
+        - InputAttachmentName: 'slate'
+          InputId: !Ref MediaLiveInputA2
+          InputSettings:
+            AudioSelectors: []
+            CaptionSelectors: []
+            DeblockFilter: DISABLED
+            DenoiseFilter: DISABLED
+            FilterStrength: 1
+            InputFilter: AUTO
+            Smpte2038DataPreference: IGNORE
+            SourceEndBehavior: LOOP
+        - InputAttachmentName: 'prod'
+          InputId: !Ref MediaLiveInputB2
+          InputSettings:
+            AudioSelectors: []
+            CaptionSelectors: []
+            DeblockFilter: DISABLED
+            DenoiseFilter: DISABLED
+            FilterStrength: 1
+            InputFilter: AUTO
+            Smpte2038DataPreference: IGNORE
+            SourceEndBehavior: LOOP
+      InputSpecification:
+        Codec: AVC
+        MaximumBitrate: MAX_20_MBPS
+        Resolution: HD
+      Destinations:
+        - Id: mediapackage-destination
+          Settings:
+            - Url: !Select
+              - 0
+              - !GetAtt
+                - MediaPackageV2Channel2
+                - IngestEndpointUrls
+      EncoderSettings:
+        AudioDescriptions:
+          - Name: audio
+            AudioSelectorName: Default
+            AudioTypeControl: FOLLOW_INPUT
+            LanguageCodeControl: FOLLOW_INPUT
+            CodecSettings:
+              AacSettings:
+                InputType: NORMAL
+                Bitrate: 128000
+                CodingMode: CODING_MODE_2_0
+                RawFormat: NONE
+                Spec: MPEG4
+                Profile: LC
+                RateControlMode: CBR
+                SampleRate: 48000
+        CaptionDescriptions: []
+        GlobalConfiguration:
+          InputEndAction: NONE
+          OutputLockingMode: EPOCH_LOCKING
+          OutputTimingSource: INPUT_CLOCK
+          SupportLowFramerateInputs: DISABLED
+        OutputGroups: 
+          - OutputGroupSettings:
+              CmafIngestGroupSettings:
+                Destination:
+                  DestinationRefId: mediapackage-destination
+                SegmentLength: 1
+                SegmentLengthUnits: SECONDS
+            Outputs:
+              - OutputName: 1080p5994
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 1
+                VideoDescriptionName: 1080p
+              - OutputName: 720p5994
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 2
+                VideoDescriptionName: 720p
+              - OutputName: 480p2997
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 3
+                VideoDescriptionName: 480p
+              - OutputName: 240p2997
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 4
+                VideoDescriptionName: 240p
+              - AudioDescriptionNames:
+                  - audio
+                OutputName: _audio
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: audio
+        TimecodeConfig:
+          Source: SYSTEMCLOCK
+        VideoDescriptions:
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 60000
+                FramerateDenominator: 1001
+                GopBReference: DISABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 5000000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: HIGH
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 1080
+            Name: 1080p
+            RespondToAfd: NONE
+            Sharpness: 50
+            ScalingBehavior: DEFAULT
+            Width: 1920
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 60000
+                FramerateDenominator: 1001
+                GopBReference: DISABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 3000000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: HIGH
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 720
+            Name: 720p
+            RespondToAfd: NONE
+            Sharpness: 75
+            ScalingBehavior: DEFAULT
+            Width: 1280
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 30000
+                FramerateDenominator: 1001
+                GopBReference: ENABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 1500000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: MAIN
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 480
+            Name: 480p
+            RespondToAfd: NONE
+            Sharpness: 100
+            ScalingBehavior: STRETCH_TO_OUTPUT
+            Width: 854
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 30000
+                FramerateDenominator: 1001
+                GopBReference: ENABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 1500000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: MAIN
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: EXTRA_SMALL_10
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 240
+            Name: 240p
+            RespondToAfd: NONE
+            Sharpness: 100
+            ScalingBehavior: STRETCH_TO_OUTPUT
+            Width: 426
+    DependsOn:
+      - MediaLiveInputA2
+      - MediaLiveInputB2
+      - MediaPackageV2ChannelGroup
+      - MediaPackageV2Channel2
+      - MediaPackageV2OriginEndpoint2
+      
+  MediaLiveChannel3:
+    Type: AWS::MediaLive::Channel
+    Properties:
+      Name: !Sub '${ChannelName3}'
+      ChannelClass: SINGLE_PIPELINE
+      LogLevel: DISABLED
+      RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/MediaLiveAccessRole
+      InputAttachments:
+        - InputAttachmentName: 'slate'
+          InputId: !Ref MediaLiveInputA3
+          InputSettings:
+            AudioSelectors: []
+            CaptionSelectors: []
+            DeblockFilter: DISABLED
+            DenoiseFilter: DISABLED
+            FilterStrength: 1
+            InputFilter: AUTO
+            Smpte2038DataPreference: IGNORE
+            SourceEndBehavior: LOOP
+        - InputAttachmentName: 'prod'
+          InputId: !Ref MediaLiveInputB3
+          InputSettings:
+            AudioSelectors: []
+            CaptionSelectors: []
+            DeblockFilter: DISABLED
+            DenoiseFilter: DISABLED
+            FilterStrength: 1
+            InputFilter: AUTO
+            Smpte2038DataPreference: IGNORE
+            SourceEndBehavior: LOOP
+      InputSpecification:
+        Codec: AVC
+        MaximumBitrate: MAX_20_MBPS
+        Resolution: HD
+      Destinations:
+        - Id: mediapackage-destination
+          Settings:
+            - Url: !Select
+              - 0
+              - !GetAtt
+                - MediaPackageV2Channel3
+                - IngestEndpointUrls
+      EncoderSettings:
+        AudioDescriptions:
+          - Name: audio
+            AudioSelectorName: Default
+            AudioTypeControl: FOLLOW_INPUT
+            LanguageCodeControl: FOLLOW_INPUT
+            CodecSettings:
+              AacSettings:
+                InputType: NORMAL
+                Bitrate: 128000
+                CodingMode: CODING_MODE_2_0
+                RawFormat: NONE
+                Spec: MPEG4
+                Profile: LC
+                RateControlMode: CBR
+                SampleRate: 48000
+        CaptionDescriptions: []
+        GlobalConfiguration:
+          InputEndAction: NONE
+          OutputLockingMode: EPOCH_LOCKING
+          OutputTimingSource: INPUT_CLOCK
+          SupportLowFramerateInputs: DISABLED
+        OutputGroups: 
+          - OutputGroupSettings:
+              CmafIngestGroupSettings:
+                Destination:
+                  DestinationRefId: mediapackage-destination
+                SegmentLength: 1
+                SegmentLengthUnits: SECONDS
+            Outputs:
+              - OutputName: 1080p5994
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 1
+                VideoDescriptionName: 1080p
+              - OutputName: 720p5994
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 2
+                VideoDescriptionName: 720p
+              - OutputName: 480p2997
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 3
+                VideoDescriptionName: 480p
+              - OutputName: 240p2997
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: 4
+                VideoDescriptionName: 240p
+              - AudioDescriptionNames:
+                  - audio
+                OutputName: _audio
+                OutputSettings:
+                  CmafIngestOutputSettings:
+                    NameModifier: audio
+        TimecodeConfig:
+          Source: SYSTEMCLOCK
+        VideoDescriptions:
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 60000
+                FramerateDenominator: 1001
+                GopBReference: DISABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 5000000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: HIGH
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 1080
+            Name: 1080p
+            RespondToAfd: NONE
+            Sharpness: 50
+            ScalingBehavior: DEFAULT
+            Width: 1920
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 60000
+                FramerateDenominator: 1001
+                GopBReference: DISABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 3000000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: HIGH
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 720
+            Name: 720p
+            RespondToAfd: NONE
+            Sharpness: 75
+            ScalingBehavior: DEFAULT
+            Width: 1280
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 30000
+                FramerateDenominator: 1001
+                GopBReference: ENABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 1500000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: MAIN
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: MEDIUM_32
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 480
+            Name: 480p
+            RespondToAfd: NONE
+            Sharpness: 100
+            ScalingBehavior: STRETCH_TO_OUTPUT
+            Width: 854
+          - CodecSettings:
+              H264Settings:
+                AfdSignaling: NONE
+                ColorMetadata: INSERT
+                AdaptiveQuantization: HIGH
+                EntropyEncoding: CABAC
+                FlickerAq: DISABLED
+                ForceFieldPictures: DISABLED
+                FramerateControl: SPECIFIED
+                FramerateNumerator: 30000
+                FramerateDenominator: 1001
+                GopBReference: ENABLED
+                GopClosedCadence: 1
+                GopNumBFrames: 3
+                GopSize: 30
+                GopSizeUnits: FRAMES
+                SubgopLength: DYNAMIC
+                ScanType: PROGRESSIVE
+                Level: H264_LEVEL_AUTO
+                LookAheadRateControl: HIGH
+                MaxBitrate: 1500000
+                NumRefFrames: 3
+                ParControl: SPECIFIED
+                ParNumerator: 1
+                ParDenominator: 1
+                Profile: MAIN
+                RateControlMode: QVBR
+                Syntax: DEFAULT
+                SceneChangeDetect: ENABLED
+                Slices: 1
+                SpatialAq: ENABLED
+                TemporalAq: ENABLED
+                TimecodeBurninSettings:
+                  FontSize: EXTRA_SMALL_10
+                  Position: TOP_CENTER
+                  Prefix: !Ref TimecodeBurninPrefix
+                TimecodeInsertion: PIC_TIMING_SEI
+            Height: 240
+            Name: 240p
+            RespondToAfd: NONE
+            Sharpness: 100
+            ScalingBehavior: STRETCH_TO_OUTPUT
+            Width: 426
+    DependsOn:
+      - MediaLiveInputA3
+      - MediaLiveInputB3
+      - MediaPackageV2ChannelGroup
+      - MediaPackageV2Channel3
+      - MediaPackageV2OriginEndpoint3
 
   MediaPackageCloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -367,27 +1163,24 @@ Resources:
         Enabled: true
         HttpVersion: http2
         DefaultCacheBehavior:
-          TargetOriginId: !Sub '${ChannelName}-2'
+          TargetOriginId: 'Origin-gp'
           CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
           ViewerProtocolPolicy: redirect-to-https
         CacheBehaviors:
-          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName}/${EndpointName}/*'
-            TargetOriginId: !Sub '${ChannelName}-gp'
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName1}/${EndpointName1}/*'
+            TargetOriginId: 'Origin-gp'
             CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
             ViewerProtocolPolicy: redirect-to-https
-        Origins:
-          - Id: !Sub '${ChannelName}-2'
-            DomainName: !GetAtt MediaPackageV2ChannelGroup.EgressDomain
-            OriginPath: ""
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: match-viewer
-              OriginSSLProtocols:
-                - TLSv1.2
-              OriginReadTimeout: 30
-              OriginKeepaliveTimeout: 5    
-          - Id: !Sub '${ChannelName}-1'
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName2}/${EndpointName2}/*'
+            TargetOriginId: 'Origin-gp'
+            CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: !Sub '/out/v1/${ChannelGroupName}/${ChannelName3}/${EndpointName3}/*'
+            TargetOriginId: 'Origin-gp'
+            CachePolicyId: 08627262-05a9-4f76-9ded-b50ca2e3a84f
+            ViewerProtocolPolicy: redirect-to-https
+        Origins: 
+          - Id: 'Region-1'
             DomainName: !Ref EgressDomainChannel1
             OriginPath: ""
             CustomOriginConfig:
@@ -398,15 +1191,26 @@ Resources:
                 - TLSv1.2
               OriginReadTimeout: 30
               OriginKeepaliveTimeout: 5      
+          - Id: 'Region-2'
+            DomainName: !GetAtt MediaPackageV2ChannelGroup.EgressDomain
+            OriginPath: ""
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: match-viewer
+              OriginSSLProtocols:
+                - TLSv1.2
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5   
         OriginGroups:
           Quantity: 1
           Items:
-            - Id: !Sub '${ChannelName}-gp'
+            - Id: 'Origin-gp'
               Members:
                 Quantity: 2
                 Items:
-                  - OriginId: !Sub '${ChannelName}-1'
-                  - OriginId: !Sub '${ChannelName}-2'
+                  - OriginId: 'Region-1'
+                  - OriginId: 'Region-2'
               FailoverCriteria:
                 StatusCodes:
                   Quantity: 8
@@ -422,28 +1226,32 @@ Resources:
               SelectionCriteria: media-quality-based     
         PriceClass: PriceClass_All
     DependsOn:
-      - MediaPackageV2OriginEndpoint
-    
+      - MediaPackageV2OriginEndpoint1
+      - MediaPackageV2OriginEndpoint2
+      - MediaPackageV2OriginEndpoint3    
 
 Outputs:    
-  MediaPackageV2CmafIngest0:
-    Description: "Cmaf Ingest endpoint 1"
-    Value: !Select
-      - 0
-      - !GetAtt MediaPackageV2Channel.IngestEndpointUrls
-          
-  MediaPackageV2CmafIngest1:
-    Description: "Cmaf Ingest endpoint 2"
-    Value: !Select
-      - 1
-      - !GetAtt MediaPackageV2Channel.IngestEndpointUrls
-
-  MediaPackageV2HLS:
-    Description: "Hls endpoint url"
+  MediaPackageV2HLS1:
+    Description: "Hls endpoint url ch1"
     Value:  !Select
       - 0
-      - !GetAtt MediaPackageV2OriginEndpoint.HlsManifestUrls   
-      
+      - !GetAtt MediaPackageV2OriginEndpoint1.HlsManifestUrls   
+
+  MediaPackageV2HLS2:
+    Description: "Hls endpoint url ch1"
+    Value:  !Select
+      - 0
+      - !GetAtt MediaPackageV2OriginEndpoint2.HlsManifestUrls   
+
+  MediaPackageV2HLS3:
+    Description: "Hls endpoint url ch1"
+    Value:  !Select
+      - 0
+      - !GetAtt MediaPackageV2OriginEndpoint3.HlsManifestUrls         
   MediaPackageDomain:
     Description: "Egress Domain"
     Value: !GetAtt MediaPackageV2ChannelGroup.EgressDomain
+    
+  CloudFrontDomain1:
+    Description: "CloudFront Distribution Domain 1"
+    Value: !GetAtt MediaPackageCloudFrontDistribution.DomainName
